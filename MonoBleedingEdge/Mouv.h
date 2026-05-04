@@ -54,6 +54,14 @@ unsigned char data[100];
 unsigned char checksum;
 
 } Message;
+// Constantes pilotage manuel
+// Position Coordonnées (X, Y, Z, Rx, Ry, Rz)
+// Home
+// 250000, -300000, 150000, 180000000, 0, 0
+// Pick
+// 426500, -191600, 39300, 195000000, 18000000, -10000000
+// Place
+// 155000, -497000, -50000, 180000000, 0, 0
 
 // ===============================
 // Fonctions bas niveau (UDP)
@@ -85,6 +93,8 @@ int get_has_piece(SOCKET sock, struct sockaddr_in* addr);
 // ===============================
 // Fonctions applicatives
 // ===============================
+// Menu pour la console - renvoie le choix de l'utilisateur ou -1 en cas d'erreur de saisie
+int manual_menu();
 void manual_pilotage(SOCKET sock, struct sockaddr_in* addr);
 
 void automatic_pilotage(SOCKET sock, struct sockaddr_in* addr, int n_pieces);
