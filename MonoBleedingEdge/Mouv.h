@@ -1,54 +1,101 @@
 /*--------------------------------------------------------------------------------
--- HEIG-VD, institute REDS, 1400 Yverdon-les-Bains
+-- HEIG-VD, bureau iai, 1400 Yverdon-les-Bains
 -- Project : Header file for robot control functions
 -- File    : Mouv.c
 -- Author   : Alexandre Moore & Tenkeu Franklin 
 -- Date    : 27.04.2026
 --------------------------------------------------------------------------------*/
-// Constantes pour les commandes et les messages 
-#define REP_ERROR            0x10
-#define REP_INFO             0x20
+#ifndef MOUV_H
+#define MOUV_H
 
-#define COM_CONVEYOR         0x30
-#define REP_CONVEYOR         0x31
+#include <winsock2.h>
 
-#define COM_PALLET_SENSOR    0x32
-#define REP_PALLET_SENSOR    0x33
+// ===============================
+// Constantes protocole
+// ===============================
+typedef enum
+{
+REP_ERROR = 0x10,
+REP_INFO = 0x20,
 
-#define COM_SET_VACUUM       0x34
-#define REP_SET_VACUUM       0x35
-#define REP_ERROR            0x10
-#define REP_INFO             0x20
+COM_CONVEYOR = 0x30,
+REP_CONVEYOR = 0x31,
 
-#define COM_CONVEYOR         0x30
-#define REP_CONVEYOR         0x31
+COM_PALLET_SENSOR = 0x32,
+REP_PALLET_SENSOR = 0x33,
 
-#define COM_PALLET_SENSOR    0x32
-#define REP_PALLET_SENSOR    0x33
+COM_SET_VACUUM = 0x34,
+REP_SET_VACUUM = 0x35,
 
-#define COM_SET_VACUUM       0x34
-#define REP_SET_VACUUM       0x35
+COM_GET_HAS_PIECE = 0x36,
+REP_GET_HAS_PIECE = 0x37,
 
-#define COM_GET_HAS_PIECE    0x36
-#define REP_GET_HAS_PIECE    0x37
+COM_ROBOT_MOVE = 0x40,
+REP_ROBOT_MOVE = 0x41,
 
-#define COM_ROBOT_MOVE       0x40
-#define REP_ROBOT_MOVE       0x41
+COM_ROBOT_IS_MOVING = 0x42,
+REP_ROBOT_IS_MOVING = 0x43,
 
-#define COM_ROBOT_IS_MOVING  0x42
-#define REP_ROBOT_IS_MOVING  0x43
+COM_PRESENCE = 0x60,
+REP_PRESENCE = 0x61
+```
 
-#define COM_PRESENCE         0x60
-#define REP_PRESENCE         0x61
-// Fonctions de pilotage du robot
-void info_robot();
-void send_message();
-int receive_message();
-int compute_checksum();
-void convoyeur_on();
-void vacuum_on();
-void robot_move();
-void automatic_pilotage(char n_pieces);
-void error_message();
-void manual_pilotage();
-char machine_detection();
+} MessageType;
+
+// ===============================
+// Structure d’un message
+// ===============================
+typedef struct
+{
+unsigned char type;
+unsigned char number;
+unsigned char length;
+unsigned char data[100];
+unsigned char checksum;
+
+} Message;
+
+// ===============================
+// Fonctions bas niveau (UDP)
+// ===============================
+unsigned char compute_checksum(unsigned char* buffer, int length);
+
+int send_message(SOCKET sock, struct sockaddr_in* addr, Message* msg);
+
+int receive_message(SOCKET sock, Message* msg);
+
+// ===============================
+// Fonctions haut niveau (robot)
+// ===============================
+void convoyeur_on(SOCKET sock, struct sockaddr_in* addr);
+void convoyeur_off(SOCKET sock, struct sockaddr_in* addr);
+
+void vacuum_on(SOCKET sock, struct sockaddr_in* addr);
+void vacuum_off(SOCKET sock, struct sockaddr_in* addr);
+
+void robot_move(SOCKET sock, struct sockaddr_in* addr,
+int x, int y, int z,
+int rx, int ry, int rz);
+
+int robot_is_moving(SOCKET sock, struct sockaddr_in* addr);
+
+int get_pallet_sensor(SOCKET sock, struct sockaddr_in* addr);
+int get_has_piece(SOCKET sock, struct sockaddr_in* addr);
+
+// ===============================
+// Fonctions applicatives
+// ===============================
+void manual_pilotage(SOCKET sock, struct sockaddr_in* addr);
+
+void automatic_pilotage(SOCKET sock, struct sockaddr_in* addr, int n_pieces);
+
+void error_message(SOCKET sock, struct sockaddr_in* addr);
+
+void info_robot(Message* msg);
+
+// ===============================
+// Détection machine
+// ===============================
+int machine_detection(SOCKET sock);
+
+#endif
