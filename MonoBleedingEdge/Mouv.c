@@ -99,20 +99,45 @@ void manual_pilotage(SOCKET sock, struct sockaddr_in* addr)
 {
     // Simple manual control: move to predefined positions
     int choice;
-    scanf("%d", &choice);
+    choice = manual_menu();
     switch (choice)
     {
         case 1:
-            robot_move(sock, addr, 250000, -300000, 150000, 180000000, 0, 0);
+            convoyeur_on(sock, addr);
             break;
         case 2:
-            robot_move(sock, addr, 426500, -191600, 39300, 195000000, 18000000, -10000000);
+            convoyeur_off(sock, addr);
             break;
         case 3:
+            printf("Capteur de palette: %d\n", get_pallet_sensor(sock, addr));
+            break;
+        case 4:
+            vacuum_on(sock, addr);
+            break;
+        case 5:
+            vacuum_off(sock, addr);
+            break;
+        case 6:
+            printf("Presence piece: %d\n", get_has_piece(sock, addr));
+            break;
+        case 7:
+            robot_move(sock, addr, 250000, -300000, 150000, 180000000, 0, 0);
+            break;
+        case 8:
+            robot_move(sock, addr, 426500, -191600, 39300, 195000000, 18000000, -10000000);
+            break;
+        case 9:
             robot_move(sock, addr, 155000, -497000, -50000, 180000000, 0, 0);
             break;
+        case 10:
+            printf("Robot en mouvement: %d\n", robot_is_moving(sock, addr));
+            break;
+        case 99:
+            printf("Retour au menu principal.\n");
+            break;
         default:
-            printf("Invalid choice\n");
+            printf("Choix invalide. Veuillez entrer un nombre valide.\n");
+            break;
     }
 }
 
