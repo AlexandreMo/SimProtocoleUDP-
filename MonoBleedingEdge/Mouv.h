@@ -9,7 +9,8 @@
 #define MOUV_H
 
 #include <winsock2.h>
-
+#include <stdio.h>
+#include <string.h>
 // ===============================
 // Constantes protocole
 // ===============================
@@ -97,7 +98,7 @@ void manual_pilotage(SOCKET sock, struct sockaddr_in* addr);
 
 void automatic_pilotage(SOCKET sock, struct sockaddr_in* addr, int n_pieces);
 
-void error_message(SOCKET sock, struct sockaddr_in* addr);
+void error_message(Message* msg);
 
 void info_robot(Message* msg);
 

@@ -50,18 +50,69 @@ int receive_message(SOCKET sock, Message* msg)
 void convoyeur_on(SOCKET sock, struct sockaddr_in* addr)
 {
     Message msg = {COM_CONVEYOR, 0, 0, {0}, 0};
+    msg.data[0] = 1; // 1 pour allumer
+    msg.checksum = compute_checksum((unsigned char*)&msg, 3 + msg.length);
     send_message(sock, addr, &msg);
 }
 void convoyeur_off(SOCKET sock, struct sockaddr_in* addr)
 {
     Message msg = {COM_CONVEYOR, 1, 0, {0}, 0};
+    msg.data[0] = 0; // 0 pour éteindre
+    msg.checksum = compute_checksum((unsigned char*)&msg, 3 + msg.length);
     send_message(sock, addr, &msg);
 }
-void set_vacuum(SOCKET sock, struct sockaddr_in* addr, int on)
+
+void rep_convoyeur(Message* Response)
 {
-    Message msg = {COM_SET_VACUUM, on ? 1 : 0, 0, {0}, 0};
+    unsigned char checksum = compute_checksum((unsigned char*)&Response, 3 + Response->length);
+    if(checksum != Response->checksum)    {
+        printf("Checksum invalide pour la réponse du convoyeur.\n");
+    }
+    else {
+        if (Response->type == REP_CONVEYOR && Response->length == 1)
+        {
+            if(Response->data[0] == 1) {
+                printf("Convoyeur is currently ON.\n");
+            } else {
+                printf("Convoyeur is currently OFF.\n");
+            }
+        } else {
+            printf("Type de message inattendu pour la réponse du convoyeur.\n");
+        }
+        return; // Checksum valide
+    }
+        
+}
+
+void rep_vacumm(Message* Response)
+{
+    unsigned char checksum = compute_checksum((unsigned char*)&Response, 3 + Response->length);
+    if(checksum != Response->checksum)    {
+        printf("Checksum invalide pour la réponse du vacuum.\n");
+        return; // Checksum invalide
+    }
+    else{
+        if(Response->type == REP_SET_VACUUM && Response->length == 1){
+            if(Response->data[0] == 1){
+                printf("Vacuum is currently ON.\n");
+            }
+            else{
+                printf("Vacuum is currently OFF.\n");
+            }
+        }
+        else{
+            printf("Type de message inattendu pour la réponse du vacuum.\n");
+        }
+        return; // Checksum valide
+    }
+}
+set_vacuum(SOCKET sock, struct sockaddr_in* addr, int state)
+{
+    Message msg = {COM_SET_VACUUM, 0, 0, {0}, 0};
+    msg.data[0] = state; // 1 pour allumer, 0 pour éteindre
+    msg.checksum = compute_checksum((unsigned char*)&msg, 3 + msg.length);
     send_message(sock, addr, &msg);
-}   
+}
 void vacuum_on(SOCKET sock, struct sockaddr_in* addr)
 {
     set_vacuum(sock, addr, 1);
@@ -155,3 +206,110 @@ void automatic_pilotage(SOCKET sock, struct sockaddr_in* addr, int n_pieces)
         vacuum_off(sock, addr);
     }
 }
+
+int robot_is_moving(SOCKET sock, struct sockaddr_in* addr){
+    Message msg = {COM_ROBOT_IS_MOVING, 0, 0, {0}, 0};
+    send_message(sock, addr, &msg);
+    Message response;
+    receive_message(sock, &response);
+    unsigned char checksum = compute_checksum((unsigned char*)&response, 3 + response.length);
+    if (checksum != response.checksum)    {
+        return -1; // Checksum invalide
+    }
+    if (response.type == REP_ROBOT_IS_MOVING && response.length == 1)
+    {
+        if(response.data[0] == 1) {
+            printf("Robot is currently moving.\n");
+        } else {
+            printf("Robot is currently stationary.\n");
+        }
+        return response.data[0]; // 1 if moving, 0 if not
+    }
+    return -1; // Error
+}
+
+int get_pallet_sensor(SOCKET sock, struct sockaddr_in* addr){
+    Message msg = {COM_PALLET_SENSOR, 0, 0, {0}, 0};
+    msg.data[0] = 0; // Pas de données à envoyer, mais on peut mettre 0 pour la cohérence
+    msg.checksum = compute_checksum((unsigned char*)&msg, 3 + msg.length);
+    send_message(sock, addr, &msg);
+    Message response;
+    receive_message(sock, &response);
+    unsigned char checksum = compute_checksum((unsigned char*)&response, 3 + response.length);
+    if (checksum != response.checksum)    {
+        return -1; // Checksum invalide
+    }
+    if (response.type == REP_PALLET_SENSOR && response.length == 1)
+    {
+        printf("Pallet sensor state: %d\n", response.data[0]);
+        return response.data[0]; // 1 if pallet detected, 0 if not
+    }
+    return -1; // Error
+}
+
+int get_has_piece(SOCKET sock, struct sockaddr_in* addr){
+    Message msg = {COM_GET_HAS_PIECE, 0, 0, {0}, 0};
+    send_message(sock, addr, &msg);
+    Message response;
+    receive_message(sock, &response);
+    unsigned char checksum = compute_checksum((unsigned char*)&response, 3 + response.length);
+    if (checksum != response.checksum)    {
+        return -1; // Checksum invalide
+    }
+    if (response.type == REP_GET_HAS_PIECE && response.length == 1)
+    {
+        printf("Has piece: %d\n", response.data[0]);
+        return response.data[0]; // 1 if piece present, 0 if not
+    }
+    return -1; // Error
+}
+
+void robot_move(SOCKET sock, struct sockaddr_in* addr,
+    int x, int y, int z,
+    int rx, int ry, int rz){
+        Message msg = {COM_ROBOT_MOVE, 0, 24, {0}, 0};
+        memcpy(msg.data, &x, 4);
+        memcpy(msg.data + 4, &y, 4);
+        memcpy(msg.data + 8, &z, 4);
+        memcpy(msg.data + 12, &rx, 4);
+        memcpy(msg.data + 16, &ry, 4);
+        memcpy(msg.data + 20, &rz, 4);
+    msg.checksum = compute_checksum((unsigned char*)&msg, 3 + msg.length);
+    send_message(sock, addr, &msg);
+}
+
+void rep_robot_move(Message* Response)
+{
+    unsigned char checksum = compute_checksum((unsigned char*)&Response, 3 + Response->length);
+    if(checksum != Response->checksum)    {
+        printf("Checksum invalide pour la réponse du mouvement du robot.\n");
+        return; // Checksum invalide
+    }
+    if (Response->type == REP_ROBOT_MOVE && Response->length == 1)
+    {
+        if(Response->data[0] == 1) {
+            printf("Robot move command executed successfully.\n");
+        } else {
+            printf("Robot move command failed.\n");
+        }
+    } else {
+        printf("Type de message inattendu pour la réponse du mouvement du robot.\n");
+    }
+}
+
+void error_message(Message* msg)
+{
+    unsigned char checksum = compute_checksum((unsigned char*)&msg, 3 + msg->length);
+    if(checksum != msg->checksum)    {
+        printf("Checksum invalide pour le message d'erreur.\n");
+        return; // Checksum invalide
+    }
+    if (msg->type == REP_ERROR && msg->length > 0)
+    {
+        printf("Error: %.*s\n", msg->length, msg->data);
+    } else {
+        printf("Type de message inattendu pour le message d'erreur.\n");
+    }
+
+}
+
