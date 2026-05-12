@@ -45,15 +45,16 @@ REP_PRESENCE = 0x61
 // ===============================
 // Structure d’un message
 // ===============================
-typedef struct
-{
+#pragma pack(push, 1) // Force l'alignement à 1 octet (pas de trous)
+typedef struct{
 unsigned char type;
 unsigned char number;
 unsigned char length;
 unsigned char data[100];
 unsigned char checksum;
-
 } Message;
+#pragma pack(pop) // Fin de l'alignement forcé
+
 // Constantes pilotage manuel
 // Position Coordonnées (X, Y, Z, Rx, Ry, Rz)
 // Home
@@ -74,20 +75,27 @@ int receive_message(SOCKET sock, Message* msg);
 // ===============================
 // Fonctions haut niveau (robot)
 // ===============================
-void convoyeur_on(SOCKET sock, struct sockaddr_in* addr);
-void convoyeur_off(SOCKET sock, struct sockaddr_in* addr);
+int convoyeur_on(SOCKET sock, struct sockaddr_in* addr);
+int convoyeur_off(SOCKET sock, struct sockaddr_in* addr);
+void rep_convoyeur(Message* Response);
 
-void vacuum_on(SOCKET sock, struct sockaddr_in* addr);
-void vacuum_off(SOCKET sock, struct sockaddr_in* addr);
+int set_vacuum(SOCKET sock, struct sockaddr_in* addr, int state);
+void rep_vacumm(Message* Response);
+int vacuum_on(SOCKET sock, struct sockaddr_in* addr);
+int vacuum_off(SOCKET sock, struct sockaddr_in* addr);
 
-void robot_move(SOCKET sock, struct sockaddr_in* addr,
+int robot_move(SOCKET sock, struct sockaddr_in* addr,
 int x, int y, int z,
 int rx, int ry, int rz);
+void rep_robot_move(Message* Response);
 
 int robot_is_moving(SOCKET sock, struct sockaddr_in* addr);
 
 int get_pallet_sensor(SOCKET sock, struct sockaddr_in* addr);
 int get_has_piece(SOCKET sock, struct sockaddr_in* addr);
+
+int presencesim(SOCKET sock, struct sockaddr_in* addr);
+int rep_presence(Message* Response);
 
 // ===============================
 // Fonctions applicatives
@@ -98,13 +106,17 @@ void manual_pilotage(SOCKET sock, struct sockaddr_in* addr);
 
 void automatic_pilotage(SOCKET sock, struct sockaddr_in* addr, int n_pieces);
 
-void error_message(Message* msg);
+void handle_other_responses(Message* response);
 
-void info_robot(Message* msg);
+void handle_rep_info(Message* info);
 
 // ===============================
 // Détection machine
 // ===============================
 int machine_detection(SOCKET sock);
+
+int manual_menu();
+void manual_pilotage(SOCKET sock, struct sockaddr_in* addr);
+void automatic_pilotage(SOCKET sock, struct sockaddr_in* addr, int n_pieces);
 
 #endif

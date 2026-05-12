@@ -6,6 +6,7 @@
 -- Date    : 27.04.2026
 --------------------------------------------------------------------------------*/
 #include "Mouv.h"
+#include  "Client.h"
 unsigned char compute_checksum(unsigned char* buffer, int length)
 {
     unsigned char checksum = 0;
