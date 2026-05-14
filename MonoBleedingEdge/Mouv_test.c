@@ -5,13 +5,12 @@
 -- Author   : Alexandre Moore & Tenkeu Franklin 
 -- Date    : 27.04.2026
 --------------------------------------------------------------------------------*/
-#include "Mouv.h"
+#pragma once
+#include "Mouv_test.h"
 #include  "Client.h"
+#include "protocole.h"
 
-Message msg = {0};
-Message response = {0};
-
-compute_checksum(Message* msg){
+unsigned char compute_checksum(Message* msg){
     unsigned char checksum = 0;
     checksum += msg->type;
     checksum += msg->number;
@@ -22,13 +21,13 @@ compute_checksum(Message* msg){
     return checksum;
 }
 
-convoyeur_on(SOCKET sock, struct sockaddr_in* addr) {
+int convoyeur_on(){
     msg.type = COM_CONVEYOR;
     msg.number = 0;
     msg.data[0] = 1; 
     msg.length = 1;
     msg.checksum = compute_checksum(&msg);
-    if (SendAndRecieveMessage(&msg, &response, SERVER_IP) == 0){
+    if (SendAndRecieveMessage(&msg, &response) == 0){
         if (response.type == 0x10) { // REP_ERROR
             handle_other_responses(&response);
             return -2; // Erreur spécifique pour une réponse d'erreur du serveur
@@ -39,14 +38,14 @@ convoyeur_on(SOCKET sock, struct sockaddr_in* addr) {
     return -1; // Erreur
 }
 
-convoyeur_off(SOCKET sock, struct sockaddr_in* addr){
+int convoyeur_off(){
     msg.type = COM_CONVEYOR;
     msg.number = 0;
     msg.data[0] = 0;
     msg.length = 1; // length est 1 car on envoie 1 octet
     msg.checksum = compute_checksum(&msg);
     
-    if (SendAndRecieveMessage(&msg, &response, SERVER_IP) == 0){
+    if (SendAndRecieveMessage(&msg, &response) == 0){
         if (response.type == 0x10) { // REP_ERROR
             handle_other_responses(&response);
             return -2; // Erreur spécifique pour une réponse d'erreur du serveur
@@ -57,8 +56,8 @@ convoyeur_off(SOCKET sock, struct sockaddr_in* addr){
     return -1; // Erreur
 }
 
-rep_convoyeur(Message* Response){
-    unsigned char checksum = compute_checksum((unsigned char*)Response);
+void rep_convoyeur(Message* Response){
+    unsigned char checksum = compute_checksum(Response);
     if(checksum != Response->checksum){
         printf("Checksum invalide pour la réponse du convoyeur.\n");
     }
@@ -77,8 +76,8 @@ rep_convoyeur(Message* Response){
         
 }
 
-rep_vacumm(Message* Response){
-    unsigned char checksum = compute_checksum((unsigned char*)Response);
+void rep_vacumm(Message* Response){
+    unsigned char checksum = compute_checksum(Response);
     if(checksum != Response->checksum){
         printf("Checksum invalide pour la réponse du vacuum.\n");
         return; // Checksum invalide
@@ -99,14 +98,14 @@ rep_vacumm(Message* Response){
     }
 }
 
-set_vacuum(SOCKET sock, struct sockaddr_in* addr, int state){
+int set_vacuum(int state){
     msg.type = COM_SET_VACUUM;
     msg.number = 0;
     msg.data[0] = state; // 1 pour allumer, 0 pour éteindre
     msg.length = 1; // length est 1 car on envoie 1 octet
     msg.checksum = compute_checksum(&msg);
 
-    if (SendAndRecieveMessage(&msg, &response, SERVER_IP) == 0){
+    if (SendAndRecieveMessage(&msg, &response) == 0){
         rep_vacumm(&response);
         return 0; // Succès
     }
@@ -114,21 +113,21 @@ set_vacuum(SOCKET sock, struct sockaddr_in* addr, int state){
 }
 
 
-vacuum_on(SOCKET sock, struct sockaddr_in* addr){
-    if(set_vacuum(sock, addr, 1) == 0){
+int vacuum_on(){
+    if(set_vacuum(1) == 0){
         return 0; // Succès
     }
     return -1; // Erreur
 }
 
-vacuum_off(SOCKET sock, struct sockaddr_in* addr){
-    if(set_vacuum(sock, addr, 0) == 0){
+int vacuum_off(){
+    if(set_vacuum(0) == 0){
         return 0; // Succès
     }
     return -1; // Erreur    
 }
 
-manual_menu(){
+int manual_menu(){
     printf("Commandes manuelles ---------------------------\n");
     printf("1. Allumer le convoyeur\n");
     printf("2. Arreter le convoyeur\n");
@@ -151,40 +150,38 @@ manual_menu(){
     return choix;
 }
 
-manual_pilotage(SOCKET sock, struct sockaddr_in* addr){
+void manual_pilotage(int choice){
     // Simple manual control: move to predefined positions
-    int choice;
-    choice = manual_menu();
     switch (choice){
         case 1:
-            convoyeur_on(sock, addr);
+            convoyeur_on();
             break;
         case 2:
-            convoyeur_off(sock, addr);
+            convoyeur_off();
             break;
         case 3:
-            printf("Capteur de palette: %d\n", get_pallet_sensor(sock, addr));
+            printf("Capteur de palette: %d\n", get_pallet_sensor());
             break;
         case 4:
-            vacuum_on(sock, addr);
+            vacuum_on();
             break;
         case 5:
-            vacuum_off(sock, addr);
+            vacuum_off();
             break;
         case 6:
-            printf("Presence piece: %d\n", get_has_piece(sock, addr));
+            printf("Presence piece: %d\n", get_has_piece());
             break;
         case 7:
-            robot_move(sock, addr, 250000, -300000, 150000, 180000000, 0, 0);
+            robot_move(250000, -300000, 150000, 180000000, 0, 0);
             break;
         case 8:
-            robot_move(sock, addr, 426500, -191600, 39300, 195000000, 18000000, -10000000);
+            robot_move(426500, -191600, 39300, 195000000, 18000000, -10000000);
             break;
         case 9:
-            robot_move(sock, addr, 155000, -497000, -50000, 180000000, 0, 0);
+            robot_move(155000, -497000, -50000, 180000000, 0, 0);
             break;
         case 10:
-            printf("Robot en mouvement: %d\n", robot_is_moving(sock, addr));
+            printf("Robot en mouvement: %d\n", robot_is_moving());
             break;
         case 99:
             printf("Retour au menu principal.\n");
@@ -196,27 +193,27 @@ manual_pilotage(SOCKET sock, struct sockaddr_in* addr){
     return;
 }
 
-automatic_pilotage(SOCKET sock, struct sockaddr_in* addr, int n_pieces){
+void automatic_pilotage(int n_pieces){
     for (int i = 0; i < n_pieces; i++)
     {
         // Move to pick
-        robot_move(sock, addr, 426500, -191600, 39300, 195000000, 18000000, -10000000);
-        while (robot_is_moving(sock, addr)) {} // Wait
-        vacuum_on(sock, addr);
+        robot_move(426500, -191600, 39300, 195000000, 18000000, -10000000);
+        while (robot_is_moving()) {} // Wait
+        vacuum_on();
         // Move to place
-        robot_move(sock, addr, 155000, -497000, -50000, 180000000, 0, 0);
-        while (robot_is_moving(sock, addr)) {} // Wait
-        vacuum_off(sock, addr);
+        robot_move(155000, -497000, -50000, 180000000, 0, 0);
+        while (robot_is_moving()) {} // Wait
+        vacuum_off();
     }
 }
 
-robot_is_moving(SOCKET sock, struct sockaddr_in* addr){
+int robot_is_moving(){
     msg.type = COM_ROBOT_IS_MOVING;
     msg.number = 0;
     msg.length = 0;
     msg.checksum = compute_checksum(&msg);
-    if (SendAndRecieveMessage(&msg, &response, SERVER_IP) == 0){
-        unsigned char checksum = compute_checksum((unsigned char*)&response);
+    if (SendAndRecieveMessage(&msg, &response) == 0){
+        unsigned char checksum = compute_checksum(&response);
         if (checksum != response.checksum){
             printf("Checksum invalide pour la réponse du robot_is_moving.\n");
             return -1; // Checksum invalide
@@ -238,14 +235,14 @@ robot_is_moving(SOCKET sock, struct sockaddr_in* addr){
     return -1; // Erreur de communication
 }
 
-get_pallet_sensor(SOCKET sock, struct sockaddr_in* addr){
+int get_pallet_sensor(){
     msg.type = COM_PALLET_SENSOR;
     msg.number = 0;
     msg.length = 0;
     msg.checksum = compute_checksum(&msg);
     msg.data[0] = 0; // Pas de données à envoyer, mais on peut mettre 0 pour la cohérence
-    SendAndRecieveMessage(&msg, &response, SERVER_IP);
-    unsigned char checksum = compute_checksum((unsigned char*)&response);
+    SendAndRecieveMessage(&msg, &response);
+    unsigned char checksum = compute_checksum(&response);
     if (checksum != response.checksum){
         return -1; // Checksum invalide
     }
@@ -263,18 +260,18 @@ get_pallet_sensor(SOCKET sock, struct sockaddr_in* addr){
     return -3; // Error
 }
 
-get_has_piece(SOCKET sock, struct sockaddr_in* addr){
+int get_has_piece(){
     msg.type = COM_GET_HAS_PIECE;
     msg.number = 0;
     msg.length = 0;
     msg.data[0] = 0; // Pas de données à envoyer, mais on peut mettre 0 pour la cohérence
     msg.checksum = compute_checksum(&msg);
 
-    if(SendAndRecieveMessage(&msg, &response, SERVER_IP) != 0){
+    if(SendAndRecieveMessage(&msg, &response) != 0){
         return -4; // Erreur de communication
     }
 
-    unsigned char checksum = compute_checksum((unsigned char*)&response);
+    unsigned char checksum = compute_checksum(&response);
 
     if (checksum != response.checksum){
         return -1; // Checksum invalide
@@ -297,7 +294,7 @@ get_has_piece(SOCKET sock, struct sockaddr_in* addr){
     return -3; // Error
 }
 
-robot_move(SOCKET sock, struct sockaddr_in* addr, int x, int y, int z, int rx, int ry, int rz) {
+int robot_move(int x, int y, int z, int rx, int ry, int rz) {
     msg.type = COM_ROBOT_MOVE;
     msg.number = 0;
     msg.length = 24; // 6 coordonnées * 4 octets chacune
@@ -309,15 +306,15 @@ robot_move(SOCKET sock, struct sockaddr_in* addr, int x, int y, int z, int rx, i
     }
     msg.checksum = compute_checksum(&msg);
 
-    if (SendAndRecieveMessage(&msg, &response, SERVER_IP) == 0){
+    if (SendAndRecieveMessage(&msg, &response) == 0){
         rep_robot_move(&response); // Analyse de la réponse
         return 0; // Succès
     }
     return -1; // Erreur
 }
 
-rep_robot_move(Message* Response){
-    unsigned char checksum = compute_checksum((unsigned char*)Response);
+void rep_robot_move(Message* Response){
+    unsigned char checksum = compute_checksum(Response);
     if(checksum != Response->checksum){
         printf("Checksum invalide pour la réponse du mouvement du robot.\n");
         return; // Checksum invalide
@@ -334,21 +331,42 @@ rep_robot_move(Message* Response){
     }
 }
 
-presencesim(SOCKET sock, struct sockaddr_in* addr){
+int presencesim(const char* new_ip){
     msg.type = COM_PRESENCE;
     msg.number = 0;
     msg.length = 0;
     msg.data[0] = 0; // Pas de données à envoyer, mais on peut mettre 0 pour la cohérence
     msg.checksum = compute_checksum(&msg);
 
-    if (SendAndRecieveMessage(&msg, &response, SERVER_IP) == 0){
-        return rep_presence(&response);
+    struct sockaddr_in broadcastAddr;
+    memset(&broadcastAddr, 0, sizeof(broadcastAddr));
+    broadcastAddr.sin_family = AF_INET;
+    broadcastAddr.sin_port = htons(DEFAULT_PORT);
+    inet_pton(AF_INET, new_ip, &broadcastAddr.sin_addr);
+
+    // On envoie à l'adresse de diffusion, pas à l'IP habituelle
+    int sendResult = sendto(socket_client, (const char*)&msg, 4, 0, 
+                            (struct sockaddr*)&broadcastAddr, sizeof(broadcastAddr));
+    
+    // Ensuite, tu attends la réponse normalement
+    if (sendResult != SOCKET_ERROR) {
+        return SendAndRecieveMessage(&msg, &response); 
     }
-    return -1; // Error
+    return -1;
 }
 
-rep_presence(Message* Response){
-    unsigned char checksum = compute_checksum((unsigned char*)Response);
+
+
+void print_presence(Message* Response, const char* new_ip){
+    printf("Adresse de diffusion: %s\n", new_ip);
+    printf("****************************************************************\n");
+    printf("******************Selection d'une machine***********************\n");
+    printf("****************************************************************\n");
+
+}
+
+int rep_presence(Message* Response){
+    unsigned char checksum = compute_checksum(Response);
     if(checksum != Response->checksum){
         printf("Checksum invalide pour la réponse de presence.\n");
         return -1; // Checksum invalide
@@ -370,7 +388,7 @@ rep_presence(Message* Response){
     }
 }
 
-handle_other_responses(Message* response){
+void handle_other_responses(Message* response){
     switch (response->type)
     {
     case REP_ERROR: // 0x10
@@ -395,6 +413,8 @@ handle_other_responses(Message* response){
     case REP_INFO:
         handle_rep_info(response);
         break;
+    case NULL:
+        printf("Aucune réponse du serveur.\n");
     default:
         break;
     }
@@ -407,7 +427,7 @@ void handle_rep_info(Message* info) {
     if (info->type != REP_INFO) return;
 
     // Vérification du checksum pour être sûr que la donnée est fiable
-    unsigned char cks = calculateChecksum(info);
+    unsigned char cks = compute_checksum(info);
     if (cks != info->checksum) {
         printf("[REP_INFO] Erreur de checksum, donnée ignorée.\n");
         return;
@@ -425,4 +445,115 @@ void handle_rep_info(Message* info) {
     }
 
     printf("\n>>> [MESSAGE INFO] Palette detectee ! Total traite : %d <<<\n", total_palettes);
+}
+
+void localisation_machine(const char* diff_ip){
+    count = 0;
+    if (!is_valid_ip(diff_ip)) {
+        printf("Adresse IP invalide : %s\n", diff_ip);
+        return;
+    }
+
+    struct sockaddr_in destAddr;
+    memset(&destAddr, 0, sizeof(destAddr));
+    destAddr.sin_family = AF_INET;
+    destAddr.sin_port = htons(DEFAULT_PORT);
+    inet_pton(AF_INET, diff_ip, &destAddr.sin_addr);
+
+    Message presence_msg = {0};
+    presence_msg.type = COM_PRESENCE;
+    presence_msg.number = 0;
+    presence_msg.length = 0;
+    presence_msg.checksum = compute_checksum(&presence_msg);
+
+    unsigned char send_buffer[4] = {
+        presence_msg.type,
+        presence_msg.number,
+        presence_msg.length,
+        presence_msg.checksum
+    };
+
+    int broadcastEnabled = 1;
+    setsockopt(socket_client, SOL_SOCKET, SO_BROADCAST,
+               (const char*)&broadcastEnabled, sizeof(broadcastEnabled));
+
+    int sendResult = sendto(socket_client, (const char*)send_buffer, sizeof(send_buffer), 0,
+                            (struct sockaddr*)&destAddr, sizeof(destAddr));
+    if (sendResult == SOCKET_ERROR) {
+        printf("Erreur lors de l'envoi de la diffusion : %d\n", WSAGetLastError());
+        return;
+    }
+
+    printf("\nAdresse de diffusion : %s\n", diff_ip);
+    printf("**********************************************\n");
+    printf("****** Selection d'une machine ***************\n");
+    printf("**********************************************\n");
+
+    struct sockaddr_in fromAddr;
+    unsigned char recv_buffer[104];
+
+    // On écoute pendant un court laps de temps (le timeout du socket gère l'arrêt)
+    while (1) {
+        int fromSize = sizeof(fromAddr);
+        int recvResult = recvfrom(socket_client, (char*)recv_buffer, sizeof(recv_buffer), 0,
+                                  (struct sockaddr*)&fromAddr, &fromSize);
+
+        if (recvResult == SOCKET_ERROR) {
+            break;
+        }
+        if (recvResult < 4) {
+            continue;
+        }
+
+        Message presence_response = {0};
+        presence_response.type = recv_buffer[0];
+        presence_response.number = recv_buffer[1];
+        presence_response.length = recv_buffer[2];
+
+        if (presence_response.length > 100 || recvResult != 4 + presence_response.length) {
+            continue;
+        }
+
+        memcpy(presence_response.data, &recv_buffer[3], presence_response.length);
+        presence_response.checksum = recv_buffer[3 + presence_response.length];
+
+        if (compute_checksum(&presence_response) != presence_response.checksum) {
+            continue;
+        }
+
+        response = presence_response;
+        if (response.type == REP_PRESENCE) {
+            if (count >= 10) {
+                continue;
+            }
+            count++;
+            char ip_str[16];
+            inet_ntop(AF_INET, &(fromAddr.sin_addr), ip_str, sizeof(ip_str));
+            
+            // On mémorise l'IP pour l'option de sélection
+            strncpy(machines_trouvees[count-1], ip_str, 15);
+            machines_trouvees[count-1][15] = '\0';
+
+            // On récupère le nom dans data (ex: "francois")
+            char nom[21] = {0};
+            if (response.length > 1 && (response.data[0] == 0 || response.data[0] == 1)) {
+                int nom_length = response.length - 1;
+                if (nom_length > 20) nom_length = 20;
+                memcpy(nom, &response.data[1], nom_length);
+            } else if (response.length > 1 || (response.length == 1 && response.data[0] > 1)) {
+                int nom_length = response.length;
+                if (nom_length > 20) nom_length = 20;
+                memcpy(nom, response.data, nom_length);
+            }
+
+            if (nom[0] != '\0') {
+                printf("  %d - %s - %s\n", count, ip_str, nom);
+            } else {
+                printf("  %d - %s\n", count, ip_str);
+            }
+        }
+    }
+    printf("  0 - Revenir au menu principal\n");
+    printf("\n");
+    printf("Choix > ");
 }

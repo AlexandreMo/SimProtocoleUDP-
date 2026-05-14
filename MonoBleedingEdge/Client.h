@@ -1,13 +1,14 @@
 #pragma once
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#include "protocole.h"
 
 #pragma comment(lib, "ws2_32.lib")
 
-#define DEFAULT_PORT 27598
-#define TIMEOUT 5000 // Timeout en millisecondes
+void SetServerIP(const char* new_ip);
 
-const char *SERVER_IP = "127.0.0.1"; // Adresse IP du serveur (localhost)
+int is_valid_ip(const char* ip);
 
+int OpenConnection(const char* ip);
 
-int SendAndRecieveMessage(Message* msg, Message* reponse, const char* server_ip);
+int SendAndRecieveMessage(Message* msg, Message* reponse);
+
+void CloseConnection();

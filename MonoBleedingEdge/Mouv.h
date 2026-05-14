@@ -75,8 +75,8 @@ int receive_message(SOCKET sock, Message* msg);
 // ===============================
 // Fonctions haut niveau (robot)
 // ===============================
-int convoyeur_on(SOCKET sock, struct sockaddr_in* addr);
-int convoyeur_off(SOCKET sock, struct sockaddr_in* addr);
+void convoyeur_on(SOCKET sock, struct sockaddr_in* addr);
+void convoyeur_off(SOCKET sock, struct sockaddr_in* addr);
 void rep_convoyeur(Message* Response);
 
 int set_vacuum(SOCKET sock, struct sockaddr_in* addr, int state);
@@ -101,7 +101,7 @@ int rep_presence(Message* Response);
 // Fonctions applicatives
 // ===============================
 // Menu pour la console - renvoie le choix de l'utilisateur ou -1 en cas d'erreur de saisie
-int manual_menu();
+int manual_menu(int choice);
 void manual_pilotage(SOCKET sock, struct sockaddr_in* addr);
 
 void automatic_pilotage(SOCKET sock, struct sockaddr_in* addr, int n_pieces);
