@@ -4,27 +4,27 @@
 #include "GestionMenu.h"
 #include "Client.h"
 
-int main(){
+int main() {
     int choix = -1;
     int choice = -1;
-    if (OpenConnection(SERVER_IP) !=0){
+    if (OpenConnection(SERVER_IP) != 0) {
         printf("Erreur d'ouverture de connexion.\n");
         return 1;
     }
-    
-    while (1){
+
+    while (1) {
         choix = menu_principal();
-        switch (choix){
+        switch (choix) {
         case 1:
             while (choice != 99) {
-                choice = manual_menu();
+                choice = menu_pilotage_manuel();
                 manual_pilotage(choice);
             }
             break;
         case 2:
             printf("Combien de pieces a assembler ? ");
             int n_pieces;
-            if (scanf("%d", &n_pieces) != 1 || n_pieces <= 0){
+            if (scanf("%d", &n_pieces) != 1 || n_pieces <= 0) {
                 printf("Nombre invalide. Veuillez entrer un nombre entier positif.\n");
                 break;
             }
@@ -125,7 +125,6 @@ int main(){
             CloseConnection();
             return 0;
         default:
-            printf("Choix invalide. Veuillez entrer un nombre valide.\n");
             break;
         }
     }

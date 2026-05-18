@@ -62,6 +62,4 @@ void handle_rep_info(Message* info);
 // Détection machine
 // ===============================
 
-int manual_menu();
-
 #endif

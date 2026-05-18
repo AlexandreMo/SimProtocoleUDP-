@@ -12,14 +12,14 @@ int menu_principal(){
     printf("5. Detection par diffusion\n");
     printf("9. Quitter le programme\n");
     printf("Choix>");
-    int choix;
+    int choi1;
     // Saisie du choix de l'utilisateur
-    if (scanf("%d", &choix) != 1)
-    {
-        return -1; // Erreur de saisie
+    if (scanf("%d", &choi1) != 1){
         printf("Choix invalide. Veuillez entrer un nombre.\n");
+        while (getchar() != '\n');
+        return -1; // Erreur de saisie
     }
-    return choix;
+    return choi1;
 }
 
 int menu_pilotage_manuel(){
@@ -36,11 +36,12 @@ int menu_pilotage_manuel(){
     printf("10. Afficher si le robot est en mouvement\n");
     printf("99. Quitter les fonctions manuelles\n");
     printf("Choix>");
-    int choix;
+    int choi;
     // Saisie du choix de l'utilisateur
-    if (scanf("%d", &choix) != 1){
-        return -1; // Erreur de saisie
+    if (scanf("%d", &choi) != 1){
         printf("Choix invalide. Veuillez entrer un nombre.\n");
+        while (getchar() != '\n');
+        return -1; // Erreur de saisie        
     }
-    return choix;
+    return choi;
 }
