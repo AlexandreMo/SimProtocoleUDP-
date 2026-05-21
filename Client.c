@@ -1,3 +1,10 @@
+/*--------------------------------------------------------------------------------
+-- HEIG-VD, bureau iai, 1400 Yverdon-les-Bains
+-- Project : Header file for robot control functions
+-- File    : Mouv.c
+-- Author   : Alexandre Moore & Tenkeu Franklin 
+-- Date    : 27.04.2026
+--------------------------------------------------------------------------------*/
 #define _CRT_SECURE_NO_WARNINGS
 #include "Client.h"
 #include "Mouv_test.h"
