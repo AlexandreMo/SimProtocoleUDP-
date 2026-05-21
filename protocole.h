@@ -48,6 +48,22 @@ typedef enum{
 
 } MessageType;
 
+typedef enum {
+    PS_START = 0,
+    PS_CONVEYOR_ON,
+    PS_WAIT_FOR_PALLET,
+    PS_MOVE_TO_PICK,
+    PS_WAIT_MOVE_TO_PICK,
+    PS_VACUUM_ON,
+    PS_WAIT_VACUUM_ON,
+    PS_MOVE_TO_PLACE,
+    PS_WAIT_MOVE_TO_PLACE,
+    PS_VACUUM_OFF,
+    PS_WAIT_VACUUM_OFF,
+    PS_DONE
+} PilotState;
+
+
 extern char SERVER_IP[16];
 extern SOCKET socket_client;
 extern struct sockaddr_in server_Addr;
