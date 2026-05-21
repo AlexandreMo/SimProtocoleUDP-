@@ -1,5 +1,4 @@
 #define _CRT_SECURE_NO_WARNINGS
-#pragma once
 #include "Client.h"
 #include "Mouv_test.h"
 #include <stdio.h>
@@ -16,7 +15,11 @@ int count = 0;
 Message msg = {0};
 Message response = {0};
 
-
+/**
+ * @brief Set the Server IP object
+ * 
+ * @param new_ip 
+ */
 void SetServerIP(const char* new_ip) {
     if (!is_valid_ip(new_ip)) {
         printf("Adresse IP invalide : %s\n", new_ip);
@@ -35,14 +38,25 @@ void SetServerIP(const char* new_ip) {
 }
 
 
-
+/**
+ * @brief     Tente de convertir l'IP en binaire et 
+ *            Retourne 1 si succès, 0 si éche
+ * 
+ * @param ip 
+ * @return int 
+ */
 int is_valid_ip(const char* ip) {
     struct sockaddr_in sa;
     // Tente de convertir l'IP en format binaire
     // Retourne 1 si succès, 0 si échec
     return inet_pton(AF_INET, ip, &(sa.sin_addr)) == 1;
 }
-
+/**
+ * @brief Ouvre la connection
+ * 
+ * @param ip 
+ * @return int 
+ */
 int OpenConnection(const char* ip) {
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) return -1;
@@ -61,13 +75,18 @@ int OpenConnection(const char* ip) {
     inet_pton(AF_INET, ip, &server_Addr.sin_addr);
     return 0;
 }
-
+/**
+ * @brief Gere l'envoi et la réponse de message venant/cherchant du serveur
+ * 
+ * @param msg 
+ * @param reponse 
+ * @return int 
+ */
 int SendAndRecieveMessage(Message* msg, Message* reponse) {
     if (socket_client == INVALID_SOCKET) return -1;
 
     unsigned char send_buffer[104];
 
-    msg->checksum = compute_checksum(msg);
 
     send_buffer[0] = msg->type;
     send_buffer[1] = msg->number;
@@ -129,7 +148,10 @@ int SendAndRecieveMessage(Message* msg, Message* reponse) {
 
     return 0;
 }
-
+/**
+ * @brief Ferme la connection en cas de socket invalide
+ * 
+ */
 void CloseConnection() {
     if (socket_client != INVALID_SOCKET) {
         closesocket(socket_client);

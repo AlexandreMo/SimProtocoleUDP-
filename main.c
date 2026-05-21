@@ -1,5 +1,4 @@
 #define _CRT_SECURE_NO_WARNINGS
-#pragma once
 #include "Mouv_test.h"
 #include "GestionMenu.h"
 #include "Client.h"
@@ -31,6 +30,34 @@ int main(){
             automatic_pilotage(n_pieces);
             break;
         case 3:
+            Message invalid_msg;
+            // Message 1 
+            invalid_msg.type = 0x39; // type invalide intentionnellement
+            invalid_msg.number = 0;
+            invalid_msg.length = 2;
+            invalid_msg.data[0] = 0xAA;
+            invalid_msg.data[1] = 0x55;
+            invalid_msg.checksum = compute_checksum(&invalid_msg);
+
+            SendAndRecieveMessage(&invalid_msg, &response);
+            handle_other_responses(&response);
+            // Message 2 
+            invalid_msg.type = COM_CONVEYOR; // type invalide intentionnellement
+            invalid_msg.number = 1;
+            invalid_msg.length = 0;
+            invalid_msg.data[0] = 0x55;
+            invalid_msg.data[1] = 0x78; // Donnée Invalides
+            invalid_msg.checksum = compute_checksum(&invalid_msg);
+            SendAndRecieveMessage(&invalid_msg, &response);
+            handle_other_responses(&response);
+            // Message 3 
+            invalid_msg.type = COM_CONVEYOR; // type invalide intentionnellement
+            invalid_msg.number = 0;
+            invalid_msg.length = 1;
+            invalid_msg.data[0] = 1;
+            invalid_msg.checksum = 5;
+            SendAndRecieveMessage(&invalid_msg, &response);
+            
             handle_other_responses(&response);
             break;
         case 4:
@@ -73,7 +100,7 @@ int main(){
             int valide1 = 0;
 
             while (!valide1) {
-                printf("Entrez l'adresse de difusion: ");
+                printf("Entrez l'adresse de diffusion: ");
 
                 // 1. On vérifie que scanf a lu une chaîne
                 if (scanf("%15s", diff_ip) == 1) {
@@ -110,12 +137,15 @@ int main(){
                         valide2 = 1;
                     }
 
-                    if ((count > 0) && (choice1 >= 0) && (choice1 < count)) {
-                        SetServerIP(machines_trouvees[choice1]);
+                    else if ((count > 0) && (choice1 >= 0) && (choice1 <= count)) {
+                        SetServerIP(machines_trouvees[choice1 - 1]);
                         printf("Configuration reussie !\n");
                         valide2 = 1;
                     }
-                    printf("Choix invalide. \n");
+                    else 
+                    {
+                        printf("Choix invalide. \n");
+                    }
                 }
             }
             break;

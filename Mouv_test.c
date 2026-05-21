@@ -1,15 +1,18 @@
 /*--------------------------------------------------------------------------------
--- HEIG-VD, institute REDS, 1400 Yverdon-les-Bains
--- Project : Exemple description décodeur etat futur MSS
--- File    : Mouv.c
+-- HEIG-VD, institut IAI, 1400 Yverdon-les-Bains
+-- Project : Description Fonctions Communication Mouvement Simulateur
+-- File    : Mouv_test.c
 -- Author   : Alexandre Moore & Tenkeu Franklin 
 -- Date    : 27.04.2026
 --------------------------------------------------------------------------------*/
 #define _CRT_SECURE_NO_WARNINGS
-#pragma once
 #include "Mouv_test.h"
 #include  "Client.h"
 #include "protocole.h"
+/**
+ * @brief enum pour machine pilotage auto
+ * 
+ */
 typedef enum {
     PS_START = 0,
     PS_CONVEYOR_ON,
@@ -665,35 +668,39 @@ int rep_presence(Message* Response){
 }
 
 void handle_other_responses(Message* response){
-    switch (response->type){
-        case REP_ERROR: // 0x10
-        {
-            char messageStr[101] = { 0 };
-            memcpy(messageStr, response->data, response->length);
-            for (int i = 0; messageStr[i]; i++) {
-                messageStr[i] = tolower((unsigned char)messageStr[i]); // Convertir en minuscules pour faciliter la recherche de mots-clés
-            }
-            printf("\n[!] ECHEC DE LA COMMANDE\n");
-            if (strstr(messageStr, "type") != NULL || strstr(messageStr, "command") != NULL) {
-                printf("Cause : L'ID de la commande est inconnu du serveur.\n");
-            }
-            else if (strstr(messageStr, "length") != NULL || strstr(messageStr, "Size") != NULL) {
-                printf("Cause : La taille des donnees envoyees est incorrecte.\n");
-            }
-            else if (strstr(messageStr, "checksum") != NULL) {
-                printf("Cause : Erreur de transmission (Checksum invalide).\n");
-            }
 
-            printf("Message brut du serveur : %s\n", messageStr);
-            break;
+        switch (response->type){
+            case REP_ERROR: // 0x10
+            {
+                
+                char messageStr[101] = { 0 };
+                memcpy(messageStr, response->data, response->length);
+                for (int i = 0; messageStr[i]; i++) {
+                    messageStr[i] = tolower((unsigned char)messageStr[i]); // Convertir en minuscules pour faciliter la recherche de mots-clés
+                }
+                printf("\n[!] ECHEC DE LA COMMANDE\n");
+                if (strstr(messageStr, "type") != NULL || strstr(messageStr, "command") != NULL) {
+                    printf("Cause : L'ID de la commande est inconnu du serveur.\n");
+                }
+                if (strstr(messageStr, "length") != NULL || strstr(messageStr, "size") != NULL) {
+                    printf("Cause : La taille des donnees envoyees est incorrecte.\n");
+                }
+                if (strstr(messageStr, "checksum") != NULL) {
+
+                    printf("Cause : Erreur de transmission (Checksum invalide).\n");
+                }
+
+                printf("Message brut du serveur : %s\n", messageStr);
+                break;
+            }
+            case REP_INFO:
+                handle_rep_info(response);
+                break;
+
+            default:
+                break;
         }
-        case REP_INFO:
-            handle_rep_info(response);
-            break;
-
-        default:
-            break;
-    }
+    
 }
 
 // Variable globale pour suivre le nombre de pièces traitées
@@ -785,6 +792,7 @@ void localisation_machine(const char* diff_ip){
         presence_response.type = recv_buffer[0];
         presence_response.number = recv_buffer[1];
         presence_response.length = recv_buffer[2];
+        
 
         if (presence_response.length > 100 || recvResult != 4 + presence_response.length) {
             continue;

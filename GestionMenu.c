@@ -1,8 +1,11 @@
 #define _CRT_SECURE_NO_WARNINGS
-#pragma once
 #include "GestionMenu.h"
 
-
+/**
+ * @brief Affiche le menu principal du programme
+ * 
+ * @return int 
+ */
 int menu_principal(){
     printf("Assemblage de processeurs =====================\n");
     printf("1. Commandes manuelles\n");
@@ -21,7 +24,11 @@ int menu_principal(){
     }
     return choix;
 }
-
+/**
+ * @brief Affiche le menu du pilotage manuel du programme
+ * 
+ * @return int 
+ */
 int menu_pilotage_manuel(){
     printf("Commandes manuelles ---------------------------\n");
     printf("1. Allumer le convoyeur\n");
