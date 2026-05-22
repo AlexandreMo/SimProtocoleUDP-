@@ -1,7 +1,7 @@
 /*--------------------------------------------------------------------------------
 -- HEIG-VD, bureau iai, 1400 Yverdon-les-Bains
--- Project : Header file for robot control functions
--- File    : Mouv.c
+-- Project : Main file for Serveur of robot control 
+-- File    : main.c
 -- Author   : Alexandre Moore & Tenkeu Franklin 
 -- Date    : 27.04.2026
 --------------------------------------------------------------------------------*/

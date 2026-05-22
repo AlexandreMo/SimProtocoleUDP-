@@ -1,7 +1,7 @@
 /*--------------------------------------------------------------------------------
 -- HEIG-VD, bureau iai, 1400 Yverdon-les-Bains
--- Project : Header file for robot control functions
--- File    : Mouv.c
+-- Project : file for server communication functions
+-- File    : Client.c
 -- Author   : Alexandre Moore & Tenkeu Franklin 
 -- Date    : 27.04.2026
 --------------------------------------------------------------------------------*/
@@ -47,15 +47,13 @@ void SetServerIP(const char* new_ip) {
 
 /**
  * @brief     Tente de convertir l'IP en binaire et 
- *            Retourne 1 si succès, 0 si éche
+ *            Retourne 1 si succès, 0 si échec
  * 
  * @param ip 
  * @return int 
  */
 int is_valid_ip(const char* ip) {
     struct sockaddr_in sa;
-    // Tente de convertir l'IP en format binaire
-    // Retourne 1 si succès, 0 si échec
     return inet_pton(AF_INET, ip, &(sa.sin_addr)) == 1;
 }
 /**

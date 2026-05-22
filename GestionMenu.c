@@ -50,12 +50,12 @@ int menu_pilotage_manuel(){
     printf("10. Afficher si le robot est en mouvement\n");
     printf("99. Quitter les fonctions manuelles\n");
     printf("Choix>");
-    int choi;
+    int choix;
     // Saisie du choix de l'utilisateur
-    if (scanf("%d", &choi) != 1){
+    if (scanf("%d", &choix) != 1){
         printf("Choix invalide. Veuillez entrer un nombre.\n");
         while (getchar() != '\n');
         return -1; // Erreur de saisie        
     }
-    return choi;
+    return choix;
 }
